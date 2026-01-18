@@ -1,27 +1,29 @@
-# Valheim macOS Mod Template
+# unlimitedSeeds
 
-A minimal template for creating Valheim mods with BepInEx on macOS.
+A Valheim mod that expands the world seed space by extending the internal offset range used by the WorldGenerator.
 
-## Prerequisites
+## What It Does
 
-- macOS with Valheim installed via Steam
-- .NET SDK 8.0+ (`brew install dotnet`)
-- [BepInEx for macOS](https://github.com/BepInEx/BepInEx/releases) installed in Valheim
-- Publicized assemblies in `Managed/publicized_assemblies/`
+Vanilla Valheim uses `Random.Range(-10000, 10000)` for five internal offset values (m_offset0-4), limiting all possible worlds to a 40k×40k region of the infinite Perlin noise space. This mod expands that range to ±50000, giving access to terrain configurations that no vanilla seed can produce.
 
-## Quick Start
+## Installation
+
+1. Install [BepInEx](https://valheim.thunderstore.io/package/denikson/BepInExPack_Valheim/) for Valheim
+2. Copy `unlimitedSeeds.dll` to `Valheim/BepInEx/plugins/`
+
+## Building from Source
+
+Requires .NET SDK and publicized Valheim assemblies.
 
 ```bash
-cd Template
-./rename-mod.sh YourModName YourAuthorName
 dotnet build
 ```
 
-The built DLL will be in `bin/Debug/`. Copy it to `Valheim/BepInEx/plugins/`.
+Output DLL will be in `bin/Debug/`.
 
 ## Configuration
 
-Edit `Environment.props` if your Steam library is in a non-standard location. By default it uses `$HOME/Library/Application Support/Steam/steamapps/common/Valheim`.
+Edit `Environment.props` if your Steam library is in a non-standard location.
 
 ## License
 
