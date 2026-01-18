@@ -19,6 +19,15 @@ public static class WorldGeneratorOffsetPatch
 {
     public static int OffsetMin = -100000;
     public static int OffsetMax = 100000;
+    
+    [System.ThreadStatic]
+    private static bool _isMenuWorld;
+
+    [HarmonyPrefix]
+    public static void Prefix(World world)
+    {
+        _isMenuWorld = world.m_menu;
+    }
 
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
@@ -53,22 +62,19 @@ public static class WorldGeneratorOffsetPatch
             patchCount++;
         }
 
-        if (patchCount > 0)
-        {
-            unlimitedSeedsPlugin.Log.LogDebug(
-                $"WorldGeneratorOffsetPatch: Patched {patchCount} Random.Range calls");
-        }
 
         return codes;
     }
 
-    public static int GetMinOffset() => OffsetMin;
+    public static int GetMinOffset() => _isMenuWorld ? -10000 : OffsetMin;
 
-    public static int GetMaxOffset() => OffsetMax;
+    public static int GetMaxOffset() => _isMenuWorld ? 10000 : OffsetMax;
 
     [HarmonyPostfix]
-    public static void Postfix(WorldGenerator __instance)
+    public static void Postfix(WorldGenerator __instance, World world)
     {
+        if (world.m_menu) return;
+        
         var t = typeof(WorldGenerator);
         var flags = BindingFlags.NonPublic | BindingFlags.Instance;
         
