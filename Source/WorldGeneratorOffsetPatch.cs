@@ -17,7 +17,8 @@ namespace unlimitedSeeds;
 [HarmonyPatch(typeof(WorldGenerator), MethodType.Constructor, typeof(World))]
 public static class WorldGeneratorOffsetPatch
 {
-    public static int OffsetRange = 50000;
+    public static int OffsetMin = -50000;
+    public static int OffsetMax = 50000;
 
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
@@ -61,9 +62,9 @@ public static class WorldGeneratorOffsetPatch
         return codes;
     }
 
-    public static int GetMinOffset() => -OffsetRange;
+    public static int GetMinOffset() => OffsetMin;
 
-    public static int GetMaxOffset() => OffsetRange;
+    public static int GetMaxOffset() => OffsetMax;
 
     [HarmonyPostfix]
     public static void Postfix(WorldGenerator __instance)
@@ -79,7 +80,7 @@ public static class WorldGeneratorOffsetPatch
         
         unlimitedSeedsPlugin.Log.LogInfo(
             $"WorldGenerator offsets: [{offset0:F0}, {offset1:F0}, {offset2:F0}, {offset3:F0}, {offset4:F0}] " +
-            $"(range: {OffsetRange})");
+            $"(range: [{OffsetMin}, {OffsetMax}])");
     }
 
     private static bool IsLoadConstant(CodeInstruction instruction, int value)

@@ -24,22 +24,32 @@ namespace unlimitedSeeds
         private readonly Harmony HarmonyInstance = new(ModGUID);
 
         public static readonly ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource(ModName);
-        public static ConfigEntry<int> OffsetRange = null!;
+        public static ConfigEntry<int> OffsetMin = null!;
+        public static ConfigEntry<int> OffsetMax = null!;
 
         public void Awake()
         {
-            OffsetRange = Config.BindConfig(
+            OffsetMin = Config.BindConfig(
                 "General",
-                "OffsetRange",
+                "OffsetMin",
+                -100000,
+                "Minimum offset for world positioning in noise space. " +
+                "Vanilla: -10000. Lower values expand the accessible terrain region.",
+                synced: true,
+                acceptableValues: new AcceptableValueRange<int>(-1000000, -10000));
+
+            OffsetMax = Config.BindConfig(
+                "General",
+                "OffsetMax",
                 100000,
-                "Expands where in the infinite terrain noise your world can be positioned. " +
-                "Vanilla: 10000 (40k×40k region). Higher values unlock terrain patterns impossible in vanilla. " +
-                "50000 = 9× more unique worlds.",
+                "Maximum offset for world positioning in noise space. " +
+                "Vanilla: 10000. Higher values expand the accessible terrain region.",
                 synced: true,
                 acceptableValues: new AcceptableValueRange<int>(10000, 1000000));
 
             UpdatePatchSettings();
-            OffsetRange.SettingChanged += (_, _) => UpdatePatchSettings();
+            OffsetMin.SettingChanged += (_, _) => UpdatePatchSettings();
+            OffsetMax.SettingChanged += (_, _) => UpdatePatchSettings();
             SynchronizationManager.OnConfigurationSynchronized += (_, _) => UpdatePatchSettings();
 
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -49,8 +59,9 @@ namespace unlimitedSeeds
 
         private static void UpdatePatchSettings()
         {
-            WorldGeneratorOffsetPatch.OffsetRange = OffsetRange.Value;
-            Log.LogInfo($"Offset range: {OffsetRange.Value}");
+            WorldGeneratorOffsetPatch.OffsetMin = OffsetMin.Value;
+            WorldGeneratorOffsetPatch.OffsetMax = OffsetMax.Value;
+            Log.LogInfo($"Offset range: [{OffsetMin.Value}, {OffsetMax.Value}]");
         }
 
         private void OnDestroy()
