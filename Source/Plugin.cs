@@ -5,28 +5,52 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using Jotunn.Extensions;
+using Jotunn.Managers;
 
 namespace unlimitedSeeds
 {
     [BepInPlugin(ModGUID, ModName, ModVersion)]
+    [BepInDependency(Jotunn.Main.ModGuid)]
     public class unlimitedSeedsPlugin : BaseUnityPlugin
     {
         private const string ModName = "unlimitedSeeds";
         private const string ModVersion = "1.0.0";
-        private const string Author = "modAuthorName";
+        private const string Author = "warpalicious";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
         private static string ConfigFileFullPath = BepInEx.Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
 
         private readonly Harmony HarmonyInstance = new(ModGUID);
 
-        public static readonly ManualLogSource TemplateLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
+        public static readonly ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource(ModName);
+        public static ConfigEntry<int> OffsetRange = null!;
 
         public void Awake()
         {
+            OffsetRange = Config.BindConfig(
+                "General",
+                "OffsetRange",
+                100000,
+                "Expands where in the infinite terrain noise your world can be positioned. " +
+                "Vanilla: 10000 (40k×40k region). Higher values unlock terrain patterns impossible in vanilla. " +
+                "50000 = 9× more unique worlds.",
+                synced: true,
+                acceptableValues: new AcceptableValueRange<int>(10000, 1000000));
+
+            UpdatePatchSettings();
+            OffsetRange.SettingChanged += (_, _) => UpdatePatchSettings();
+            SynchronizationManager.OnConfigurationSynchronized += (_, _) => UpdatePatchSettings();
+
             Assembly assembly = Assembly.GetExecutingAssembly();
             HarmonyInstance.PatchAll(assembly);
             SetupWatcher();
+        }
+
+        private static void UpdatePatchSettings()
+        {
+            WorldGeneratorOffsetPatch.OffsetRange = OffsetRange.Value;
+            Log.LogInfo($"Offset range: {OffsetRange.Value}");
         }
 
         private void OnDestroy()
@@ -38,7 +62,6 @@ namespace unlimitedSeeds
         {
             _lastReloadTime = DateTime.Now;
             FileSystemWatcher watcher = new(BepInEx.Paths.ConfigPath, ConfigFileName);
-            // Due to limitations of technology this can trigger twice in a row
             watcher.Changed += ReadConfigValues;
             watcher.Created += ReadConfigValues;
             watcher.Renamed += ReadConfigValues;
@@ -47,7 +70,7 @@ namespace unlimitedSeeds
         }
 
         private DateTime _lastReloadTime;
-        private const long RELOAD_DELAY = 10000000; // One second
+        private const long RELOAD_DELAY = 10000000;
 
         private void ReadConfigValues(object sender, FileSystemEventArgs e)
         {
@@ -57,24 +80,18 @@ namespace unlimitedSeeds
 
             try
             {
-                TemplateLogger.LogInfo("Attempting to reload configuration...");
+                Log.LogInfo("Attempting to reload configuration...");
                 Config.Reload();
-                TemplateLogger.LogInfo("Configuration reloaded successfully!");
+                Log.LogInfo("Configuration reloaded successfully!");
             }
             catch
             {
-                TemplateLogger.LogError($"There was an issue loading {ConfigFileName}");
+                Log.LogError($"There was an issue loading {ConfigFileName}");
                 return;
             }
 
             _lastReloadTime = now;
-
-            // Update any runtime configurations here
-            if (ZNet.instance != null && !ZNet.instance.IsDedicated())
-            {
-                TemplateLogger.LogInfo("Updating runtime configurations...");
-                // Add your configuration update logic here
-            }
+            UpdatePatchSettings();
         }
     }
 } 
