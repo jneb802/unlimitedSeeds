@@ -17,8 +17,8 @@ namespace unlimitedSeeds;
 [HarmonyPatch(typeof(WorldGenerator), MethodType.Constructor, typeof(World))]
 public static class WorldGeneratorOffsetPatch
 {
-    public static int OffsetMin = -50000;
-    public static int OffsetMax = 50000;
+    public static int OffsetMin = -100000;
+    public static int OffsetMax = 100000;
 
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
     {
