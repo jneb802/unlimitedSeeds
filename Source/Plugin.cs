@@ -15,7 +15,7 @@ namespace unlimitedSeeds
     public class unlimitedSeedsPlugin : BaseUnityPlugin
     {
         private const string ModName = "unlimitedSeeds";
-        private const string ModVersion = "1.0.0";
+        private const string ModVersion = "1.0.1";
         private const string Author = "warpalicious";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
